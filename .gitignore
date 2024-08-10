@@ -1,5 +1,6 @@
 .gradle
 .idea
+all_files_content.md
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
