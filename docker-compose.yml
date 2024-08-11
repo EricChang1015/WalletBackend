@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  db:
+    image: postgres:16.4
+    environment:
+      POSTGRES_DB: wallet_db
+      POSTGRES_USER: wallet_user
+      POSTGRES_PASSWORD: wallet_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  wallet:
+    image: <wallet_image>
+    ports:
+      - "8080:8080"
+    volumes:
+      - wallet_data:/wallet/data
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  redis_data:
+  db_data:
+  wallet_data:

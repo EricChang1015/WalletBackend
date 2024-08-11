@@ -35,6 +35,8 @@ https://api.example.com/v1
   ```json
   {
     "userId": "string",
+    "username": "string",
+    "email": "string",
     "currency": "string"
   }
   ```
@@ -44,20 +46,24 @@ https://api.example.com/v1
     curl -X POST http://localhost:8080/v1/accounts \
          -H "Content-Type: application/json" \
          -d '{
-               "id": "eric.chang",
-               "userId": "user123",
-               "currency": "USD",
-               "balance": 1000.00
+               "userId": "U0001",
+               "username": "eric.chang",
+               "email": "eric.chang@aspectgaming.com",  
+               "currency": "USD"
              }'
     ~~~
 
 - **響應體:**
   ```json
   {
-    "accountId": "string",
+    "id": "string",
     "userId": "string",
+    "username": "string",
+    "email": "string",
     "currency": "string",
     "balance": "0",
+    "availableBalance": "0",
+    "frozenBalance": "0",
     "createdAt": "timestamp"
   }
   ```
@@ -70,6 +76,22 @@ https://api.example.com/v1
 - **GET** `/v1/accounts/{accountId}`
 - **狀態碼:** 200 (OK), 404 (Not Found)
 
+- **響應體:**
+   ```json
+    {
+      "id": "string",
+      "userId": "string",
+      "username": "string",
+      "email": "string",
+      "currency": "string",
+      "balance": "string",
+      "availableBalance": "string",
+      "frozenBalance": "string",
+      "createdAt": "timestamp"
+    }
+  ```
+
+
 ### 4. 更新帳號信息
 - **PUT** `/v1/accounts/{accountId}`
 - **狀態碼:** 200 (OK), 400 (Bad Request), 404 (Not Found)
@@ -79,6 +101,22 @@ https://api.example.com/v1
 ### 1. 添加到黑名單
 - **POST** `/v1/blacklist`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 409 (Conflict)
+- **請求體：**
+  ```json
+  {
+    "accountId": "string",
+    "reason": "string"
+  }
+  ```
+- **響應體:**
+  ```json
+  {
+    "id": "string",
+    "accountId": "string",
+    "reason": "string",
+    "createdAt": "timestamp"
+  }
+  ```
 
 ### 2. 從黑名單移除
 - **DELETE** `/v1/blacklist/{accountId}`

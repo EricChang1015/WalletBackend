@@ -66,9 +66,10 @@ class WalletApplication : AbstractVerticle() {
                         .setStatusCode(201)
                         .end(Json.encode(ar.result()))
                 } else {
+                    val errorMessage = ar.cause()?.message ?: "Unknown error"
                     context.response()
                         .setStatusCode(500)
-                        .end(Json.encode(mapOf("error" to "Failed to create account")))
+                        .end(Json.encode(mapOf("error" to "Failed to create account: $errorMessage")))
                 }
             }
         } catch (e: Exception) {

@@ -14,7 +14,7 @@ import io.vertx.redis.client.RedisOptions
 // 賬戶服務
 class AccountService(private val vertx: Vertx) {
     private val accountRepository = AccountRepository(vertx)
-    private val redisClient: Redis = Redis.createClient(vertx, RedisOptions())
+    private val redisClient: Redis = Redis.createClient(vertx, RedisOptions().setConnectionString("redis://localhost:6379"))
     private val redisAPI: RedisAPI = RedisAPI.api(redisClient)
 
     fun createAccount(account: Account, handler: Handler<AsyncResult<Account>>) {

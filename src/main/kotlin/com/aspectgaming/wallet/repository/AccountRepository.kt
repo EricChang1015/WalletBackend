@@ -19,48 +19,33 @@ class AccountRepository(private val vertx: Vertx) {
         val connectOptions = PgConnectOptions()
             .setPort(5432)
             .setHost("localhost")
-            .setDatabase("your_database")
-            .setUser("your_username")
-            .setPassword("your_password")
+            .setDatabase("wallet_db")
+            .setUser("wallet_user")
+            .setPassword("wallet_pass")
 
         pool = PgPool.pool(vertx, connectOptions, poolOptionsOf(maxSize = 5))
     }
 
     fun save(account: Account, handler: Handler<AsyncResult<Account>>) {
-        val query = "INSERT INTO accounts (id, user_id, currency, balance) VALUES ($1, $2, $3, $4) RETURNING *"
-        val params = Tuple.of(account.id, account.userId, account.currency, account.balance)
+        val query = "INSERT INTO wallets (user_id, balance) VALUES ($1, $2) RETURNING *"
+        //        val query = "INSERT INTO accounts (id, user_id, currency, balance) VALUES ($1, $2, $3, $4) RETURNING *"
+        val params = Tuple.of(account.userId.toInt(), account.balance)
 
         pool.preparedQuery(query)
             .execute(params) { ar ->
                 if (ar.succeeded()) {
+                    println("Saved account: ${ar.result().size()}")
                     val row = ar.result().first()
                     val savedAccount = Account(
-                        id = row.getString("id"),
-                        userId = row.getString("user_id"),
-                        currency = row.getString("currency"),
+                        id = row.getInteger("id").toString(),
+                        userId = row.getInteger("user_id"),
                         balance = row.getBigDecimal("balance")
                     )
                     handler.handle(Future.succeededFuture(savedAccount))
                 } else {
+                    println("Failed to save account: ${ar.cause().message}")
                     handler.handle(Future.failedFuture(ar.cause()))
                 }
             }
-    }
-
-    // 實現其他數據庫操作...
-
-    // 如果你想使用協程，可以添加這樣的擴展函數：
-    suspend fun saveCoroutine(account: Account): Account {
-        val query = "INSERT INTO accounts (id, user_id, currency, balance) VALUES ($1, $2, $3, $4) RETURNING *"
-        val params = Tuple.of(account.id, account.userId, account.currency, account.balance)
-
-        val result = pool.preparedQuery(query).execute(params).await()
-        val row = result.first()
-        return Account(
-            id = row.getString("id"),
-            userId = row.getString("user_id"),
-            currency = row.getString("currency"),
-            balance = row.getBigDecimal("balance")
-        )
     }
 }
