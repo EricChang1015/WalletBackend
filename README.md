@@ -1,6 +1,8 @@
 錢包 API v1
 ===
 
+[TOC]
+
 ## 簡介
 這套 API 設計用於支持中心化交易所的核心錢包操作，包括帳戶管理、資金存取、餘額查詢等關鍵功能。我們的 API 遵循 RESTful 設計原則，提供了直觀且易於使用的接口。
 
@@ -26,46 +28,107 @@
 https://api.example.com/v1
 ```
 
-## 用戶管理
+## 認證
+所有請求除了`/auth/login` 與`/users`,
+其餘請求, 請求頭必須包含Authorization
+- **請求頭:**
+  ```
+  Authorization: Bearer <token>
+  ```
 
+### 1. 用戶登錄
+- **POST** `/auth/login`
+- **狀態碼:** 200 (OK), 401 (Unauthorized)
+- **請求體:**
+  ```json
+  {
+    "loginType": "email" | "username",
+    "email": "string",
+    "username": "string",
+    "password": "string"
+  }
+  ```
+  注意：根據 loginType 的不同，只需提供相應的字段：
+  - email + password
+  - username + password
+
+- **響應體:**
+  ```json
+  {
+    "userId": "string",
+    "token": "string",
+    "tokenType": "Bearer",
+    "expiresIn": 3600
+  }
+  ```
+
+### 2. 用戶登出
+- **POST** `/auth/logout`
+- **狀態碼:** 200 (OK), 401 (Unauthorized)
+
+### 3. 刷新訪問令牌
+- **POST** `/auth/refresh`
+- **狀態碼:** 200 (OK), 401 (Unauthorized)
+- **響應體:**
+  ```json
+  {
+    "token": "string",
+    "tokenType": "Bearer",
+    "expiresIn": 3600
+  }
+  ```
+
+## 用戶管理
 ### 1. 創建用戶
-- **POST** `/v1/users`
+- **POST** `/users`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 409 (Conflict)
 - **請求體:**
   ```json
   {
-    "id": "string",
     "username": "string",
-    "email": "string"
+    "email": "string",
+    "password": "string"
   }
   ```
 - **響應體:**
   ```json
   {
-    "id": "string",
+    "userId": "string",
     "username": "string",
     "email": "string",
+    "email_verified": "boolean",
+    "status": "string",
     "createdAt": "timestamp"
   }
   ```
+* status: active, inactive, banned
 
 ### 2. 獲取用戶信息
-- **GET** `/v1/users/{userId}`
+- **GET** `/users/{userId}`
 - **狀態碼:** 200 (OK), 404 (Not Found)
+- **響應體:** 同創建用戶
 
 ### 3. 更新用戶信息
-- **PUT** `/v1/users/{userId}`
+- **PUT** `/users/{userId}`
 - **狀態碼:** 200 (OK), 400 (Bad Request), 404 (Not Found)
+- **請求體:**
+  ```json
+  {
+    "username": "string",
+    "email": "string",
+    "password": "string"
+  }
+  ```
+
 
 ## 帳戶管理
 
 ### 1. 新增帳號
-- **POST** `/v1/accounts`
+- **POST** `/accounts`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 409 (Conflict)
 - **請求體:**
   ```json
   {
-    "id": "string",
     "userId": "string",
     "currency": "string"
   }
@@ -73,7 +136,7 @@ https://api.example.com/v1
 - **響應體:**
   ```json
   {
-    "id": "string",
+    "accountId": "string",
     "userId": "string",
     "currency": "string",
     "balance": "0",
@@ -84,26 +147,23 @@ https://api.example.com/v1
   ```
 
 ### 2. 移除帳號
-- **DELETE** `/v1/accounts/{accountId}`
+- **DELETE** `/accounts/{accountId}`
 - **狀態碼:** 200 (OK), 404 (Not Found)
 
 ### 3. 獲取帳號信息
-- **GET** `/v1/accounts/{accountId}`
+- **GET** `/accounts/{accountId}`
 - **狀態碼:** 200 (OK), 404 (Not Found)
-
-### 4. 更新帳號信息
-- **PUT** `/v1/accounts/{accountId}`
-- **狀態碼:** 200 (OK), 400 (Bad Request), 404 (Not Found)
+- **響應體:** 同新增帳號
 
 ## 黑名單功能
 
 ### 1. 添加到黑名單
-- **POST** `/v1/blacklist`
+- **POST** `/blacklist`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 409 (Conflict)
 - **請求體：**
   ```json
   {
-    "accountId": "string",
+    "userId": "string",
     "reason": "string"
   }
   ```
@@ -111,29 +171,26 @@ https://api.example.com/v1
   ```json
   {
     "id": "string",
-    "accountId": "string",
-    "reason": "string",
-    "createdAt": "timestamp"
+    "userId": "string"
   }
   ```
 
 ### 2. 從黑名單移除
-- **DELETE** `/v1/blacklist/{accountId}`
+- **DELETE** `/blacklist/{userId}`
 - **狀態碼:** 200 (OK), 404 (Not Found)
 
 ### 3. 檢查是否在黑名單
-- **GET** `/v1/blacklist/{accountId}`
+- **GET** `/blacklist/{userId}`
 - **狀態碼:** 200 (OK), 404 (Not Found)
 
 ## 餘額查詢
 
 ### 查詢餘額
-- **GET** `/v1/accounts/{accountId}/balance`
+- **GET** `/accounts/{accountId}/balance`
 - **狀態碼:** 200 (OK), 404 (Not Found)
 - **響應體:**
   ```json
   {
-    "accountId": "string",
     "currency": "string",
     "balance": "string",
     "availableBalance": "string",
@@ -144,7 +201,7 @@ https://api.example.com/v1
 ## 存款功能
 
 ### 1. 存款
-- **POST** `/v1/accounts/{accountId}/deposits`
+- **POST** `/accounts/{accountId}/deposits`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 404 (Not Found)
 - **請求體:**
   ```json
@@ -154,30 +211,12 @@ https://api.example.com/v1
     "clientTransactionId": "string"
   }
   ```
-
-### 2. 生成充值地址
-- **POST** `/v1/accounts/{accountId}/deposit-addresses`
-- **狀態碼:** 201 (Created), 400 (Bad Request), 404 (Not Found)
-- **請求體:**
-  ```json
-  {
-    "currency": "string"
-  }
-  ```
-- **響應體:**
-  ```json
-  {
-    "id": "string",
-    "accountId": "string",
-    "currency": "string",
-    "address": "string"
-  }
-  ```
+- **響應體:** 同查詢餘額
 
 ## 提款功能
 
 ### 提款
-- **POST** `/v1/accounts/{accountId}/withdrawals`
+- **POST** `/accounts/{accountId}/withdrawals`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 404 (Not Found), 422 (Unprocessable Entity)
 - **請求體:**
   ```json
@@ -188,18 +227,12 @@ https://api.example.com/v1
     "clientTransactionId": "string"
   }
   ```
-
-## 交易歷史
-
-### 獲取交易歷史
-- **GET** `/v1/accounts/{accountId}/transactions`
-- **狀態碼:** 200 (OK), 404 (Not Found)
-- **查詢參數:** `startDate`, `endDate`, `type`, `page`, `limit`
+- **響應體:** 同查詢餘額
 
 ## 內部轉帳
 
 ### 內部轉帳
-- **POST** `/v1/transfers`
+- **POST** `/transfers`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 404 (Not Found), 422 (Unprocessable Entity)
 - **請求體:**
   ```json
@@ -210,6 +243,7 @@ https://api.example.com/v1
     "currency": "string"
   }
   ```
+- **響應體:** 同查詢餘額
 
 ## 錯誤響應格式
 
@@ -242,4 +276,3 @@ https://api.example.com/v1
 - TRANSFER_NOT_ALLOWED: 禁止進行該轉帳操作
 - INSUFFICIENT_PERMISSIONS: 用戶無權執行該操作
 - DUPLICATE_TRANSACTION: 重複的交易ID
-

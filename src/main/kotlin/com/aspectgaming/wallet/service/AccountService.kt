@@ -18,11 +18,11 @@ class AccountService(private val vertx: Vertx) {
     private val redisAPI: RedisAPI = RedisAPI.api(redisClient)
 
     fun createAccount(account: Account, handler: Handler<AsyncResult<Account>>) {
-        accountRepository.save(account) { ar ->
+        accountRepository.newAccount(account) { ar ->
             if (ar.succeeded()) {
                 // 將賬戶信息緩存到Redis
                 val accountJson = JsonObject.mapFrom(account).encode()
-                redisAPI.set(listOf("account:${account.id}", accountJson)) { redisResult ->
+                redisAPI.set(listOf("account:${account.accountId}", accountJson)) { redisResult ->
                     if (redisResult.succeeded()) {
                         handler.handle(Future.succeededFuture(ar.result()))
                     } else {

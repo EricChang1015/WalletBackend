@@ -1,6 +1,8 @@
 package com.aspectgaming.wallet
 
 import com.aspectgaming.wallet.model.Account
+import com.aspectgaming.wallet.model.User
+import com.aspectgaming.wallet.repository.AccountRepository
 import com.aspectgaming.wallet.service.AccountService
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
@@ -31,12 +33,50 @@ class WalletApplication : AbstractVerticle() {
     }
 
     private fun configureRoutes(router: Router) {
+        router.post("/v1/users").handler(::createUser)
         router.post("/v1/accounts").handler(::createAccount)
-//        router.delete("/v1/accounts/:accountId").handler(::removeAccount)
-//        router.get("/v1/accounts/:accountId/balance").handler(::getBalance)
-//        router.post("/v1/accounts/:accountId/deposits").handler(::deposit)
-//        router.post("/v1/accounts/:accountId/withdrawals").handler(::withdraw)
     }
+
+    private fun createUser(context: RoutingContext) {
+        val accountRepository = AccountRepository(vertx)
+        val body = context.body()
+        println("Raw body: ${body.asString()}")
+        if (body == null) {
+            context.response()
+                .setStatusCode(400)
+                .end(Json.encode(mapOf("error" to "Request body is missing")))
+            return
+        }
+
+        val jsonBody = body.asJsonObject()
+        if (jsonBody == null) {
+            context.response()
+                .setStatusCode(400)
+                .end(Json.encode(mapOf("error" to "Invalid JSON in request body")))
+            return
+        }
+
+        try {
+            val userInfo = jsonBody.mapTo(User::class.java)
+            accountRepository.newUser(userInfo) { ar ->
+                if (ar.succeeded()) {
+                    context.response()
+                        .setStatusCode(201)
+                        .end(Json.encode(ar.result()))
+                } else {
+                    val errorMessage = ar.cause()?.message ?: "Unknown error"
+                    context.response()
+                        .setStatusCode(500)
+                        .end(Json.encode(mapOf("error" to "Failed to create user: $errorMessage")))
+                }
+            }
+        } catch (e: Exception) {
+            context.response()
+                .setStatusCode(400)
+                .end(Json.encode(mapOf("error" to "Invalid user data: ${e.message}")))
+        }
+    }
+
 
     // 路由處理函數
     private fun createAccount(context: RoutingContext) {
