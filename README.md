@@ -5,13 +5,14 @@
 這套 API 設計用於支持中心化交易所的核心錢包操作，包括帳戶管理、資金存取、餘額查詢等關鍵功能。我們的 API 遵循 RESTful 設計原則，提供了直觀且易於使用的接口。
 
 ## 主要功能：
-1. 帳戶管理：創建、刪除和更新用戶帳戶。
-2. 黑名單管理：實施風險控制，管理受限制的帳戶。
-3. 餘額操作：查詢帳戶餘額，支持多種加密貨幣。
-4. 存款功能：處理入金操作，生成充值地址。
-5. 提款功能：安全地處理出金請求。
-6. 交易歷史：檢索詳細的交易記錄。
-7. 內部轉帳：在系統內部進行資金轉移。
+1. 用戶管理：創建、查詢和更新用戶信息。
+2. 帳戶管理：創建、刪除和更新用戶帳戶。
+3. 黑名單管理：實施風險控制，管理受限制的帳戶。
+4. 餘額操作：查詢帳戶餘額，支持多種加密貨幣。
+5. 存款功能：處理入金操作，生成充值地址。
+6. 提款功能：安全地處理出金請求。
+7. 交易歷史：檢索詳細的交易記錄。
+8. 內部轉帳：在系統內部進行資金轉移。
 
 ## API 特點：
 * RESTful 架構：遵循標準 HTTP 方法和狀態碼。
@@ -20,11 +21,41 @@
 * 錯誤處理：提供詳細的錯誤碼和描述信息。
 * 多幣種支持：靈活處理各種加密貨幣。
 
-
 ## 基本URL結構
 ```
 https://api.example.com/v1
 ```
+
+## 用戶管理
+
+### 1. 創建用戶
+- **POST** `/v1/users`
+- **狀態碼:** 201 (Created), 400 (Bad Request), 409 (Conflict)
+- **請求體:**
+  ```json
+  {
+    "id": "string",
+    "username": "string",
+    "email": "string"
+  }
+  ```
+- **響應體:**
+  ```json
+  {
+    "id": "string",
+    "username": "string",
+    "email": "string",
+    "createdAt": "timestamp"
+  }
+  ```
+
+### 2. 獲取用戶信息
+- **GET** `/v1/users/{userId}`
+- **狀態碼:** 200 (OK), 404 (Not Found)
+
+### 3. 更新用戶信息
+- **PUT** `/v1/users/{userId}`
+- **狀態碼:** 200 (OK), 400 (Bad Request), 404 (Not Found)
 
 ## 帳戶管理
 
@@ -34,32 +65,16 @@ https://api.example.com/v1
 - **請求體:**
   ```json
   {
+    "id": "string",
     "userId": "string",
-    "username": "string",
-    "email": "string",
     "currency": "string"
   }
   ```
-
-- **Test**
-    ~~~bash
-    curl -X POST http://localhost:8080/v1/accounts \
-         -H "Content-Type: application/json" \
-         -d '{
-               "userId": "U0001",
-               "username": "eric.chang",
-               "email": "eric.chang@aspectgaming.com",  
-               "currency": "USD"
-             }'
-    ~~~
-
 - **響應體:**
   ```json
   {
     "id": "string",
     "userId": "string",
-    "username": "string",
-    "email": "string",
     "currency": "string",
     "balance": "0",
     "availableBalance": "0",
@@ -75,22 +90,6 @@ https://api.example.com/v1
 ### 3. 獲取帳號信息
 - **GET** `/v1/accounts/{accountId}`
 - **狀態碼:** 200 (OK), 404 (Not Found)
-
-- **響應體:**
-   ```json
-    {
-      "id": "string",
-      "userId": "string",
-      "username": "string",
-      "email": "string",
-      "currency": "string",
-      "balance": "string",
-      "availableBalance": "string",
-      "frozenBalance": "string",
-      "createdAt": "timestamp"
-    }
-  ```
-
 
 ### 4. 更新帳號信息
 - **PUT** `/v1/accounts/{accountId}`
@@ -152,7 +151,7 @@ https://api.example.com/v1
   {
     "amount": "string",
     "currency": "string",
-    "transactionId": "string"
+    "clientTransactionId": "string"
   }
   ```
 
@@ -168,6 +167,7 @@ https://api.example.com/v1
 - **響應體:**
   ```json
   {
+    "id": "string",
     "accountId": "string",
     "currency": "string",
     "address": "string"
@@ -184,18 +184,21 @@ https://api.example.com/v1
   {
     "amount": "string",
     "currency": "string",
-    "address": "string"
+    "address": "string",
+    "clientTransactionId": "string"
   }
   ```
 
-## 額外功能
+## 交易歷史
 
-### 1. 交易歷史
+### 獲取交易歷史
 - **GET** `/v1/accounts/{accountId}/transactions`
 - **狀態碼:** 200 (OK), 404 (Not Found)
 - **查詢參數:** `startDate`, `endDate`, `type`, `page`, `limit`
 
-### 2. 內部轉帳
+## 內部轉帳
+
+### 內部轉帳
 - **POST** `/v1/transfers`
 - **狀態碼:** 201 (Created), 400 (Bad Request), 404 (Not Found), 422 (Unprocessable Entity)
 - **請求體:**
@@ -223,6 +226,7 @@ https://api.example.com/v1
 
 ## 錯誤碼列表
 
+- USER_NOT_FOUND: 找不到指定的用戶
 - ACCOUNT_NOT_FOUND: 找不到指定的帳戶
 - INVALID_AMOUNT: 無效的金額
 - INSUFFICIENT_FUNDS: 餘額不足
@@ -230,11 +234,12 @@ https://api.example.com/v1
 - INVALID_ADDRESS: 無效的地址
 - TRANSACTION_FAILED: 交易失敗
 - BLACKLISTED: 帳戶在黑名單中
+- INVALID_USER_ID: 提供的用戶ID格式不正確或無效
 - INVALID_ACCOUNT_ID: 提供的帳號ID格式不正確或無效
+- DUPLICATE_USER: 該用戶已經存在，無法重複創建
 - DUPLICATE_ACCOUNT: 該帳號已經存在，無法重複創建
 - ADDRESS_GENERATION_FAILED: 充值地址生成失敗
 - TRANSFER_NOT_ALLOWED: 禁止進行該轉帳操作
 - INSUFFICIENT_PERMISSIONS: 用戶無權執行該操作
-
-API設計涵蓋HTTP狀態碼的使用、版本控制、錯誤碼的擴展，以及對多種貨幣的支持。
+- DUPLICATE_TRANSACTION: 重複的交易ID
 

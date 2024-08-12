@@ -11,6 +11,7 @@ import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Tuple
+import java.math.BigDecimal
 
 class AccountRepository(private val vertx: Vertx) {
     private val pool: Pool
@@ -27,23 +28,67 @@ class AccountRepository(private val vertx: Vertx) {
     }
 
     fun save(account: Account, handler: Handler<AsyncResult<Account>>) {
-        val query = "INSERT INTO wallets (user_id, balance) VALUES ($1, $2) RETURNING *"
-        //        val query = "INSERT INTO accounts (id, user_id, currency, balance) VALUES ($1, $2, $3, $4) RETURNING *"
-        val params = Tuple.of(account.userId.toInt(), account.balance)
+        val query = "INSERT INTO accounts (id, user_id, currency, balance) VALUES ($1, $2, $3, $4) RETURNING *"
+        val params = Tuple.of(account.id, account.userId, account.currency, account.balance)
 
         pool.preparedQuery(query)
             .execute(params) { ar ->
                 if (ar.succeeded()) {
-                    println("Saved account: ${ar.result().size()}")
                     val row = ar.result().first()
                     val savedAccount = Account(
-                        id = row.getInteger("id").toString(),
+                        id = row.getString("id"),
                         userId = row.getInteger("user_id"),
+                        currency = row.getString("currency"),
                         balance = row.getBigDecimal("balance")
                     )
                     handler.handle(Future.succeededFuture(savedAccount))
                 } else {
-                    println("Failed to save account: ${ar.cause().message}")
+                    handler.handle(Future.failedFuture(ar.cause()))
+                }
+            }
+    }
+
+    fun findById(id: String, handler: Handler<AsyncResult<Account?>>) {
+        val query = "SELECT * FROM accounts WHERE id = $1"
+        val params = Tuple.of(id)
+
+        pool.preparedQuery(query)
+            .execute(params) { ar ->
+                if (ar.succeeded()) {
+                    val row = ar.result().firstOrNull()
+                    if (row != null) {
+                        val account = Account(
+                            id = row.getString("id"),
+                            userId = row.getInteger("user_id"),
+                            currency = row.getString("currency"),
+                            balance = row.getBigDecimal("balance")
+                        )
+                        handler.handle(Future.succeededFuture(account))
+                    } else {
+                        handler.handle(Future.succeededFuture(null))
+                    }
+                } else {
+                    handler.handle(Future.failedFuture(ar.cause()))
+                }
+            }
+    }
+
+    fun updateBalance(id: String, amount: BigDecimal, handler: Handler<AsyncResult<Account>>) {
+        val query = "UPDATE accounts SET balance = balance + $1 WHERE id = $2 RETURNING *"
+        val params = Tuple.of(amount, id)
+
+        pool.preparedQuery(query)
+            .execute(params) { ar ->
+                if (ar.succeeded()) {
+                    val row = ar.result().first()
+                    val updatedAccount = Account(
+                        id = row.getString("id"),
+                        userId = row.getInteger("user_id"),
+                        currency = row.getString("currency"),
+                        balance = row.getBigDecimal("balance")
+                    )
+                    handler.handle(Future.succeededFuture(updatedAccount))
+                } else {
                     handler.handle(Future.failedFuture(ar.cause()))
                 }
             }
