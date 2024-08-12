@@ -23,6 +23,9 @@ dependencies {
     implementation("io.vertx:vertx-pg-client")
     implementation("io.vertx:vertx-sql-client")
     implementation("io.vertx:vertx-redis-client")
+    // auto
+    implementation("io.vertx:vertx-auth-jwt")
+
     implementation("com.ongres.scram:client:2.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")

@@ -1,6 +1,13 @@
 package com.aspectgaming.wallet.model
 import java.math.BigDecimal
 
+
+data class AuthRequest(
+    val loginType: String = "",
+    val identifier: String = "",
+    val password: String = ""
+)
+
 data class User(
     val userId: String = "",
     val username: String = "",

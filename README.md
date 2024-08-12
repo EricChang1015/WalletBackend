@@ -276,3 +276,10 @@ https://api.example.com/v1
 - TRANSFER_NOT_ALLOWED: 禁止進行該轉帳操作
 - INSUFFICIENT_PERMISSIONS: 用戶無權執行該操作
 - DUPLICATE_TRANSACTION: 重複的交易ID
+
+
+## Appendix
+### 產生keystore.p12文件, 放到resources目錄下
+```shell
+keytool -genseckey -keystore keystore.p12 -storetype pkcs12 -storepass secret -keyalg HmacSHA256 -keysize 256 -alias HS256 -keypass secret
+```
